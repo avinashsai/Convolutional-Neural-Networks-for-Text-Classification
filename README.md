@@ -11,3 +11,12 @@ I have implemented the architectures as described in the paper but with the foll
 
 2. I used standard train/test split method for few datasets as opposed to 10 fold CV method as mentioned in the paper.
 
+# Packages required
+
+1. python 3.6
+2. tensorflow>=1.9.0
+3. keras>=2.2.0
+4. Glove pre trained vectors(glove.42B.300d.zip)
+5. Nltk 
+
+
