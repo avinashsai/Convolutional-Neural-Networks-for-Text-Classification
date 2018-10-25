@@ -128,15 +128,15 @@ def train_random_model():
   input_vec = Input(shape=(23,))
   embedding_out = embedding_layer(input_vec)
   
-  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv1 = Conv1D(100,3,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool1 = MaxPooling1D(2)(conv1)
   out1 = Flatten()(pool1)
   
-  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv2 = Conv1D(100,4,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool2 = MaxPooling1D(2)(conv2)
   out2 = Flatten()(pool2)
   
-  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv3 = Conv1D(100,5,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool3 = MaxPooling1D(2)(conv3)
   out3 = Flatten()(pool3)
   
@@ -159,15 +159,15 @@ def train_static_model(embedding_pretrained):
   input_vec = Input(shape=(23,))
   embedding_out = embedding_layer(input_vec)
   
-  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv1 = Conv1D(100,3,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool1 = MaxPooling1D(2)(conv1)
   out1 = Flatten()(pool1)
   
-  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv2 = Conv1D(100,4,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool2 = MaxPooling1D(2)(conv2)
   out2 = Flatten()(pool2)
   
-  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv3 = Conv1D(100,5,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool3 = MaxPooling1D(2)(conv3)
   out3 = Flatten()(pool3)
   
@@ -190,15 +190,15 @@ def train_non_static_model(embedding_pretrained):
   input_vec = Input(shape=(23,))
   embedding_out = embedding_layer(input_vec)
   
-  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv1 = Conv1D(100,3,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool1 = MaxPooling1D(2)(conv1)
   out1 = Flatten()(pool1)
   
-  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv2 = Conv1D(100,4,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool2 = MaxPooling1D(2)(conv2)
   out2 = Flatten()(pool2)
   
-  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv3 = Conv1D(100,5,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool3 = MaxPooling1D(2)(conv3)
   out3 = Flatten()(pool3)
   
@@ -228,15 +228,15 @@ def train_multichannel_model(embedding_pretrained):
   
   embedding_out = Concatenate()([embedding_out1,embedding_out2])
   
-  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv1 = Conv1D(100,3,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool1 = MaxPooling1D(2)(conv1)
   out1 = Flatten()(pool1)
   
-  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv2 = Conv1D(100,4,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool2 = MaxPooling1D(2)(conv2)
   out2 = Flatten()(pool2)
   
-  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  conv3 = Conv1D(100,5,activation='relu',padding='same',kernel_constraint=max_norm(3))(embedding_out)
   pool3 = MaxPooling1D(2)(conv3)
   out3 = Flatten()(pool3)
   
