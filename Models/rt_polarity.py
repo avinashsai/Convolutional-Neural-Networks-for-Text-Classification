@@ -285,7 +285,7 @@ for train_index,test_index in kf.split(corpus,labels):
   random_model = train_random_model()
   random_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
   
-  random_model.fit(train_ind,ytrain,batch_size=50,epochs=3)
+  random_model.fit(train_ind,ytrain,batch_size=50,epochs=100)
   random_accuracy+=calculate_accuracy(random_model,test_ind,ytest)
   
   print("\n")
@@ -295,7 +295,7 @@ for train_index,test_index in kf.split(corpus,labels):
   static_model = train_static_model(embeddings_pretrained)
   static_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
   
-  static_model.fit(train_ind,ytrain,batch_size=50,epochs=3)
+  static_model.fit(train_ind,ytrain,batch_size=50,epochs=100)
   static_accuracy+=calculate_accuracy(static_model,test_ind,ytest)
   
   print("\n")
@@ -305,7 +305,7 @@ for train_index,test_index in kf.split(corpus,labels):
   non_static_model = train_non_static_model(embeddings_pretrained)
   non_static_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
   
-  non_static_model.fit(train_ind,ytrain,batch_size=50,epochs=3)
+  non_static_model.fit(train_ind,ytrain,batch_size=50,epochs=100)
   nonstatic_accuracy+=calculate_accuracy(non_static_model,test_ind,ytest)
   
   print("\n")
@@ -315,7 +315,7 @@ for train_index,test_index in kf.split(corpus,labels):
   multichannel_model = train_multichannel_model(embeddings_pretrained)
   multichannel_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
   
-  multichannel_model.fit(train_ind,ytrain,batch_size=50,epochs=1)
+  multichannel_model.fit(train_ind,ytrain,batch_size=50,epochs=100)
   multichannel_accuracy+=calculate_accuracy(multichannel_model,test_ind,ytest)
   
   
