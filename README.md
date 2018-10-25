@@ -9,7 +9,7 @@ I have implemented the architectures as described in the paper but with the foll
 
 1. I used glove 42B pretrained vectors instead of google's pretrained vectors.
 
-2. I used standard train/test split method for few datasets as opposed to 10 fold CV method as mentioned in the paper.
+2. Used Adam as optimizer as opposed SGD mentioned in the paper.
 
 # Packages required
 
