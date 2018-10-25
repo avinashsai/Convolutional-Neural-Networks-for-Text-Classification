@@ -1,16 +1,6 @@
 import nltk
-
-import tensorflow as tf
-import keras
-from keras.layers import Dense,Input
-from keras.layers import Conv2D,MaxPooling2D
-from keras.models import Model,Sequential
-from keras import metrics
-from keras.layers import Embedding
-from keras.layers import Conv1D,MaxPooling1D,Dense,Dropout
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-from keras.layers import concatenate,Concatenate,Flatten
+nltk.download('stopwords')
+nltk.download('punkt')
 
 import sys
 import os
@@ -19,14 +9,22 @@ import numpy as np
 import sklearn
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score,f1_score,confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.utils import shuffle
-
-nltk.download('stopwords')
-nltk.download('punkt')
-
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+
+import tensorflow as tf
+import keras
+from keras.layers import Dense,Input
+from keras.models import Model,Sequential
+from keras import metrics
+from keras.layers import Embedding
+from keras.layers import Conv1D,MaxPooling1D,Dense,Dropout
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+from keras.layers import concatenate,Concatenate,Flatten
+
+from keras.constraints import max_norm
+
 
 stopword = stopwords.words('english')
 
@@ -69,29 +67,28 @@ def load_data(path):
       
   return corpus
 
-path = '../Datasets/rt-polarity/'
+path = '../Datasets/rt-polarity'
 
 corpus = load_data(path)
 
 labels = np.zeros(10662)
 labels[0:5331] = 1
 
-Xtrain,Xtest,ytrain,ytest = train_test_split(corpus,labels,test_size=0.2,random_state=42)
 
-Xtrain,ytrain = shuffle(Xtrain,ytrain)
-Xtest,ytest = shuffle(Xtest,ytest)
-
-
-tokenizer = Tokenizer(num_words=18765)
-tokenizer.fit_on_texts(Xtrain)
-
-word_index = tokenizer.word_index
-
-train_seq = tokenizer.texts_to_sequences(Xtrain)
-train_indices = pad_sequences(train_seq,maxlen=20)
-
-test_seq = tokenizer.texts_to_sequences(Xtest)
-test_indices = pad_sequences(test_seq,maxlen=20)
+def generate_indices(Xtrain,ytrain):
+  
+  tokenizer = Tokenizer(num_words=18765)
+  tokenizer.fit_on_texts(Xtrain)
+  
+  train_seq = tokenizer.texts_to_sequences(Xtrain)
+  train_indices = pad_sequences(train_seq,maxlen=20)
+  
+  test_seq = tokenizer.texts_to_sequences(Xtest)
+  test_indices = pad_sequences(test_seq,maxlen=20)
+  
+  word_index = tokenizer.word_index
+  
+  return train_indices,test_indices,word_index
 
 GLOVEDIR = ''
 
@@ -104,119 +101,231 @@ for line in f:
     embeddings_index[word] = coefs
 f.close()
 
-embedding_matrix = np.zeros((len(word_index) + 1, 300))
-
-for word, i in word_index.items():
+def generate_embeddings(word_index):
+  
+  total_length = 18765
+  embedding_matrix = np.random.rand(total_length+1,300)
+  
+  count = 1
+  
+  for word, i in word_index.items():
     embedding_vector = embeddings_index.get(word)
     if embedding_vector is not None:
         embedding_matrix[i] = embedding_vector
-    else:
-      embedding_matrix[i] = np.random.rand(300)
+    if(count==total_length):
+      break
+    count+=1
+    
+  return embedding_matrix
 
-def conv_model(embedding_layer):
-  inp = Input(shape=(20,))
-  embedding_out = embedding_layer(inp)
+def train_random_model():
   
+  total_length = 18766
   
-  conv1 = Conv1D(100,3,activation='relu')(embedding_out)
-  pool1 = MaxPooling1D(2,padding='valid')(conv1)
+  embeddings_random = np.random.rand(total_length,300)
+  embedding_layer = Embedding(input_dim=total_length,output_dim=300,weights=[embeddings_random],trainable=True)
+  
+  input_vec = Input(shape=(20,))
+  embedding_out = embedding_layer(input_vec)
+  
+  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool1 = MaxPooling1D(2)(conv1)
   out1 = Flatten()(pool1)
   
-  conv2 = Conv1D(100,4,activation='relu')(embedding_out)
-  pool2 = MaxPooling1D(2,padding='valid')(conv2)
+  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool2 = MaxPooling1D(2)(conv2)
   out2 = Flatten()(pool2)
   
-  conv3 = Conv1D(100,5,activation='relu')(embedding_out)
-  pool3 = MaxPooling1D(2,padding='valid')(conv3)
+  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool3 = MaxPooling1D(2)(conv3)
   out3 = Flatten()(pool3)
   
-  concat_out = Concatenate()([out1,out2,out3])
+  final_out = Concatenate()([out1,out2,out3])
   
-  drop = Dropout(0.5)(concat_out)
+  final_out = Dropout(0.5)(final_out)
   
-  final_out = Dense(1,activation='sigmoid')(drop)
+  final_out = Dense(1,activation='sigmoid')(final_out)
   
-  model = Model(inputs=inp,outputs=final_out)
+  model = Model(inputs=input_vec,outputs=final_out)
   
   return model
 
-def train_rand_model():
+def train_static_model(embedding_pretrained):
   
-  embedding_random = np.random.rand(len(word_index)+1,300)
-  embedding_layer = Embedding(input_dim=len(word_index)+1,output_dim=300,weights=[embedding_random],trainable=True)
-  return conv_model(embedding_layer)
-
-model_rand = train_rand_model()
-
-model_rand.compile(optimizer='sgd',loss='binary_crossentropy',metrics=['accuracy'])
-
-model_rand.fit(train_indices,ytrain,batch_size=50,epochs=50,shuffle=True,verbose=1)
-
-model_rand_acc = model_rando
-
-def train_static_model():
-  embedding_layer = Embedding(input_dim=len(word_index)+1,output_dim=300,weights=[embedding_matrix],trainable=False)
-  return conv_model(embedding_layer)
-
-model_static = train_static_model()
-model_static.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
-
-model_static.fit(train_indices,ytrain,batch_size=50,epochs=50)
-
-model_static_acc = model_static.evaluate(test_indices,ytest)[1]
-print(model_static_acc)
-
-def train_non_static_model():
-  embedding_layer = Embedding(input_dim=len(word_index)+1,output_dim=300,weights=[embedding_matrix],trainable=True)
-  return conv_model(embedding_layer)
-
-model_non_static = train_non_static_model()
-model_non_static.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
-
-model_non_static.fit(train_indices,ytrain,batch_size=50,epochs=50)
-
-model_non_static_acc = model_non_static.evaluate(test_indices,ytest)[1]
-print(model_non_static_acc)
-
-def multi_channel_model():
-  embedding1 = np.random.rand(len(word_index)+1,300)
-  embedding1 =  Embedding(input_dim=len(word_index)+1,output_dim=300,weights=[embedding1],trainable=True)
+  total_length = 18766
   
-  embedding2 =  Embedding(input_dim=len(word_index)+1,output_dim=300,weights=[embedding_matrix],trainable=False)
+  embedding_layer = Embedding(input_dim=total_length,output_dim=300,weights=[embeddings_pretrained],trainable=False)
   
-  inp = Input(shape=(20,))
-  embedding1_out = embedding1(inp)
-  embedding2_out = embedding2(inp)
+  input_vec = Input(shape=(20,))
+  embedding_out = embedding_layer(input_vec)
   
-  final_embedding = Concatenate()([embedding1_out,embedding2_out])
-  
-  conv1 = Conv1D(100,3,activation='relu')(final_embedding)
-  pool1 = MaxPooling1D(2,padding='valid')(conv1)
+  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool1 = MaxPooling1D(2)(conv1)
   out1 = Flatten()(pool1)
   
-  conv2 = Conv1D(100,4,activation='relu')(final_embedding)
-  pool2 = MaxPooling1D(2,padding='valid')(conv2)
+  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool2 = MaxPooling1D(2)(conv2)
   out2 = Flatten()(pool2)
   
-  conv3 = Conv1D(100,5,activation='relu')(final_embedding)
-  pool3 = MaxPooling1D(2,padding='valid')(conv3)
+  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool3 = MaxPooling1D(2)(conv3)
   out3 = Flatten()(pool3)
   
-  concat_out = Concatenate()([out1,out2,out3])
+  final_out = Concatenate()([out1,out2,out3])
   
-  drop = Dropout(0.5)(concat_out)
+  final_out = Dropout(0.5)(final_out)
   
-  final_out = Dense(1,activation='sigmoid')(drop)
+  final_out = Dense(1,activation='sigmoid')(final_out)
   
-  model = Model(inputs=inp,outputs=final_out)
+  model = Model(inputs=input_vec,outputs=final_out)
   
   return model
 
-model_multi_channel = multi_channel_model()
-model_multi_channel.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+def train_non_static_model(embedding_pretrained):
+  
+  total_length = 18766
+  
+  embedding_layer = Embedding(input_dim=total_length,output_dim=300,weights=[embeddings_pretrained],trainable=True)
+  
+  input_vec = Input(shape=(20,))
+  embedding_out = embedding_layer(input_vec)
+  
+  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool1 = MaxPooling1D(2)(conv1)
+  out1 = Flatten()(pool1)
+  
+  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool2 = MaxPooling1D(2)(conv2)
+  out2 = Flatten()(pool2)
+  
+  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool3 = MaxPooling1D(2)(conv3)
+  out3 = Flatten()(pool3)
+  
+  final_out = Concatenate()([out1,out2,out3])
+  
+  final_out = Dropout(0.5)(final_out)
+  
+  final_out = Dense(1,activation='sigmoid')(final_out)
+  
+  model = Model(inputs=input_vec,outputs=final_out)
+  
+  return model
 
-model_multi_channel.fit(train_indices,ytrain,batch_size=50,epochs=20)
+def train_multichannel_model(embedding_pretrained):
+  
+  total_length = 18766
+  
+  embeddings_random = np.random.rand(total_length,300)
+  embedding_layer1 = Embedding(input_dim=total_length,output_dim=300,weights=[embeddings_random],trainable=True)
+   
+  embedding_layer2 = Embedding(input_dim=total_length,output_dim=300,weights=[embeddings_pretrained],trainable=False)
+  
+  input_vec = Input(shape=(20,))
+  embedding_out1 = embedding_layer1(input_vec)
+  
+  embedding_out2 = embedding_layer2(input_vec)
+  
+  embedding_out = Concatenate()([embedding_out1,embedding_out2])
+  
+  conv1 = Conv1D(100,3,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool1 = MaxPooling1D(2)(conv1)
+  out1 = Flatten()(pool1)
+  
+  conv2 = Conv1D(100,4,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool2 = MaxPooling1D(2)(conv2)
+  out2 = Flatten()(pool2)
+  
+  conv3 = Conv1D(100,5,activation='relu',kernel_constraint=max_norm(3))(embedding_out)
+  pool3 = MaxPooling1D(2)(conv3)
+  out3 = Flatten()(pool3)
+  
+  final_out = Concatenate()([out1,out2,out3])
+  
+  final_out = Dropout(0.5)(final_out)
+  
+  final_out = Dense(1,activation='sigmoid')(final_out)
+  
+  model = Model(inputs=input_vec,outputs=final_out)
+  
+  return model
 
-model_multi_channel_acc = model_multi_channel.evaluate(test_indices,ytest)[1]
-print(model_multi_channel_acc)
+def calculate_accuracy(net,X,y):
+  
+  test_length = len(X)
+  pred = net.predict(X)
+  pred = pred.reshape(test_length)
+  ypred = (pred>0.5)
+  
+  return sum(ypred==y)
+
+kf = StratifiedKFold(n_splits=2)
+
+random_accuracy = 0
+static_accuracy = 0
+nonstatic_accuracy = 0
+multichannel_accuracy = 0
+fold = 1
+
+for train_index,test_index in kf.split(corpus,labels):
+  
+  Xtrain = [corpus[i] for i in train_index]
+  ytrain = labels[train_index]
+  
+  Xtest = [corpus[i] for i in test_index]
+  ytest = labels[test_index]
+  
+  train_ind,test_ind,word_index = generate_indices(Xtrain,Xtest)
+  
+  embeddings_pretrained = generate_embeddings(word_index)
+  
+  print("Fold Number is :{}".format(fold))
+  print("Training CNN random model")
+  
+  random_model = train_random_model()
+  random_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+  
+  random_model.fit(train_ind,ytrain,batch_size=50,epochs=3)
+  random_accuracy+=calculate_accuracy(random_model,test_ind,ytest)
+  
+  print("\n")
+  
+  print("Training CNN static model")
+  
+  static_model = train_static_model(embeddings_pretrained)
+  static_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+  
+  static_model.fit(train_ind,ytrain,batch_size=50,epochs=3)
+  static_accuracy+=calculate_accuracy(static_model,test_ind,ytest)
+  
+  print("\n")
+  
+  print("Training CNN Non static model")
+  
+  non_static_model = train_non_static_model(embeddings_pretrained)
+  non_static_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+  
+  non_static_model.fit(train_ind,ytrain,batch_size=50,epochs=3)
+  nonstatic_accuracy+=calculate_accuracy(non_static_model,test_ind,ytest)
+  
+  print("\n")
+  
+  print("Training CNN Multi Channel model")
+  
+  multichannel_model = train_multichannel_model(embeddings_pretrained)
+  multichannel_model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])
+  
+  multichannel_model.fit(train_ind,ytrain,batch_size=50,epochs=1)
+  multichannel_accuracy+=calculate_accuracy(multichannel_model,test_ind,ytest)
+  
+  
+  
+  fold+=1
+  print("\n")
+  
+print("Accuracy of all models :")
+print("CNN Random Model accuracy is :{}".format((random_accuracy/10662)*100))
+print("CNN Static Model accuracy is :{}".format((static_accuracy/10662)*100))
+print("CNN Non-Static Model accuracy is :{}".format((nonstatic_accuracy/10662)*100))
+print("CNN Multi Channel Model accuracy is :{}".format((multichannel_accuracy/10662)*100))
 
