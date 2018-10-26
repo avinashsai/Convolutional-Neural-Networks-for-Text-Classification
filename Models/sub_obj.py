@@ -75,7 +75,7 @@ labels = np.zeros(10000)
 labels[0:5000] = 1
 
 
-def generate_indices(Xtrain,ytrain):
+def generate_indices(Xtrain,Xtest):
   
   tokenizer = Tokenizer(num_words=21323)
   tokenizer.fit_on_texts(Xtrain)
