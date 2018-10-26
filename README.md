@@ -4,6 +4,8 @@ Implementation of CNN for Text Classification
 # Getting Started
 This repository consists of the implementation of the paper https://arxiv.org/pdf/1408.5882.pdf. I have written code seperately for each of the datasets so that the results can be viewed separately.
 
+This model is tested as of now for 3 datasets and instructions to run models for them are given below.
+
 # Changes made
 I have implemented the architectures as described in the paper but with the following changes.
 
