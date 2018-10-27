@@ -18,7 +18,7 @@ I have implemented the architectures as described in the paper but with the foll
 1. python 3.6
 2. tensorflow>=1.9.0
 3. keras>=2.2.0
-4. Glove pre trained vectors(glove.42B.300d.zip)(Download and keep in Models folder)
+4. Glove pre trained vectors(glove.42B.300d.zip)(Download,Extract and keep in Models folder)
 5. Nltk 
 
 # How to run
