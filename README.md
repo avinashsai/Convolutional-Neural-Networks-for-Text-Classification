@@ -1,4 +1,4 @@
-# Convolutional-Neural-Networks-for-Text-Classification(On-going)
+# Convolutional-Neural-Networks-for-Text-Classification
 Implementation of CNN for Text Classification
 
 # Getting Started
