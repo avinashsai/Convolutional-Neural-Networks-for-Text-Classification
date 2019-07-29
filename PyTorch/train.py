@@ -66,7 +66,7 @@ def getloaders(trainind,valind,testind,train_labels,val_labels,test_labels,batch
 
 
 def trainmodel(net,train_loader,val_loader,test_loader,numepochs,device):
-	numepochs = 3
+	numepochs = 30
 
 	optimizer = torch.optim.Adadelta(net.parameters())
 	criterion = nn.CrossEntropyLoss()
@@ -86,13 +86,13 @@ def trainmodel(net,train_loader,val_loader,test_loader,numepochs,device):
 			output = net(indices)
 
 			loss = criterion(output,labels)
-			curloss+=loss
+			curloss+=loss.item()
 
 			loss.backward()
 			clip_grad_norm_(net.parameters(),3)
 			optimizer.step()
 
-		print("Epoch {} Loss {} ".format(epoch+1,loss/len(train_loader)))
+		print("Epoch {} Loss {} ".format(epoch+1,curloss/len(train_loader)))
 		valloss = get_loss(net,val_loader,device)
 		if(valloss<val_best_loss):
 			val_best_loss = valloss
